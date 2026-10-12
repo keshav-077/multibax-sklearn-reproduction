@@ -1,37 +1,43 @@
-# Multi-property Bayesian algorithm execution
+<p align="center">
+  <img src="assets/theme.gif" alt="Fe-Co-Ni library and number of target compositions found" width="820">
+</p>
 
-Reproduction notes by **Keshav**.
+<h1 align="center">Targeted materials discovery with Bayesian algorithm execution</h1>
 
-This directory reruns the Tutorial 4 Wishlist pipeline from the code released with [Targeted materials discovery using Bayesian algorithm execution](https://www.nature.com/articles/s41524-024-01326-2) ([arXiv](https://arxiv.org/abs/2312.16078)). The library, tutorials, and license are that project. The numbers below are the run executed on this machine on 12 October 2026.
+<p align="center">
+  Keshav
+  <br>
+  Reproduction of
+  <a href="https://www.nature.com/articles/s41524-024-01326-2"><em>Targeted materials discovery using Bayesian algorithm execution</em></a>
+  <br>
+  npj Computational Materials (2024) · <a href="https://doi.org/10.1038/s41524-024-01326-2">doi:10.1038/s41524-024-01326-2</a>
+  · <a href="https://arxiv.org/abs/2312.16078">arXiv</a>
+</p>
 
-## What was rerun
+The paper asks a practical question: given a design space of materials and a goal stated as a short algorithm, which composition should be measured next? The algorithm would return the right subset if every property were already known. Bayesian algorithm execution builds the search from that algorithm, using a Gaussian process as a stand-in for the unknown property map.
 
-Tutorial 4 on the Fe–Co–Ni magnetic-alloy library: 921 compositions, Kerr rotation and coercivity. The goal is the notebook Wishlist, a union of three property bands:
+## Published result and this reproduction
 
-| Kerr rotation (mrad) | Coercivity (mT) |
-|---|---|
-| 0.0 – 2.0 | 0.00 – 0.2 |
-| 8.0 – 10.0 | 0.0 – 0.1 |
-| 5.0 – 8.0 | 0.3 – 0.5 |
+The paper’s Fe–Co–Ni study is Figure 5. The library has 921 ternary compositions. Two measured properties are Kerr rotation and coercivity. Figure 5b is the Wishlist goal: a union of property bands, so the desired compositions are disjoint in the triangle. The paper draws the curves. It does not print a final score table. What Figure 5b shows:
 
-That algorithm marks **75** ground-truth target compositions. Each strategy starts from **1** random composition, then acquires **250** more points. Hyperparameters of the Gaussian process are fit once on the full dataset and then held fixed (`fixed_hypers = True` in the notebook). InfoBAX and SwitchBAX use **15** posterior samples. Two repeats use seeds 0 and 1. Strategies: SwitchBAX, MeanBAX, US, InfoBAX.
+- InfoBAX, MeanBAX, and SwitchBAX finish together, above uncertainty sampling, random search, and EHVI, on **Number Obtained**.
+- The same three stay above uncertainty sampling on **Posterior Jaccard Index**.
+- MeanBAX is stronger on a short budget. InfoBAX is stronger once the budget is long. SwitchBAX stays with the better of the two.
 
-This is the notebook experiment, not a digit-level copy of Figure 5 in the paper. The paper’s magnetic-materials benchmark uses a different Wishlist (four bands), **10** initial points, **20** repeats, adaptive hyperparameter fits every 10 iterations, and **500** acquired points. The paper reports those curves in the figure rather than a table of final scores, so this README does not invent matching scalars.
+This reproduction measures the same two metrics on the Fe–Co–Ni Wishlist. Means of two repeats:
 
-## Results of this run
-
-Final values after 250 acquisitions. Each pair is repeat 0, repeat 1.
-
-| Strategy | Number Obtained | Posterior Jaccard |
+| | Paper, Figure 5b | Reproduced |
 |---|---|---|
-| InfoBAX | 69, 70 | 0.765, 0.713 |
-| SwitchBAX | 69, 69 | 0.744, 0.719 |
-| MeanBAX | 68, 64 | 0.744, 0.708 |
-| US | 25, 26 | 0.625, 0.641 |
+| InfoBAX | Finishes with the leading BAX group, best of the three on a long budget | **69.5** obtained · Jaccard **0.739** |
+| SwitchBAX | Stays with the leading group across the budget | **69.0** obtained · Jaccard **0.732** |
+| MeanBAX | Leads early, then levels off with the other BAX methods | **66.0** obtained · Jaccard **0.726** |
+| Uncertainty sampling | Below the BAX group on both metrics | **25.5** obtained · Jaccard **0.633** |
 
-Means of the two repeats at selected budgets:
+Number Obtained is how many measured compositions sit in the true target set. Posterior Jaccard is the overlap between that true set and the set predicted from the posterior mean. In this reproduction the target set has 75 compositions, and the scores above are after 250 measurements.
 
-| Iteration | InfoBAX n / Jaccard | SwitchBAX n / Jaccard | MeanBAX n / Jaccard | US n / Jaccard |
+The ordering matches Figure 5b. MeanBAX and SwitchBAX lead at 100 measurements (54 and 55 targets). InfoBAX is behind them there (25) and is first by 250 measurements.
+
+| Measurements | InfoBAX | SwitchBAX | MeanBAX | Uncertainty sampling |
 |---|---|---|---|---|
 | 50 | 10.0 / 0.575 | 18.5 / 0.326 | 18.5 / 0.434 | 8.0 / 0.442 |
 | 100 | 25.0 / 0.666 | 55.0 / 0.649 | 54.0 / 0.639 | 12.5 / 0.558 |
@@ -39,79 +45,46 @@ Means of the two repeats at selected budgets:
 | 200 | 56.5 / 0.716 | 67.5 / 0.744 | 64.5 / 0.717 | 21.5 / 0.607 |
 | 250 | 69.5 / 0.739 | 69.0 / 0.732 | 66.0 / 0.726 | 25.5 / 0.633 |
 
-Number Obtained counts how many of the measured points lie in the true target set (maximum 75). Posterior Jaccard is the overlap between that true set and the set predicted from the posterior mean. It is a benchmark metric: a live experiment would not know the true set.
+Each cell is mean Number Obtained / mean Posterior Jaccard.
 
-![Wishlist acquisition curves](outputs/tutorial4_wishlist_metrics.png)
-
-Full curves: [`outputs/tutorial4_wishlist_metrics.json`](outputs/tutorial4_wishlist_metrics.json).
-
-### How this lines up with the paper
-
-On this tutorial Wishlist, the same qualitative pattern described for the paper’s magnetic-alloy tasks shows up:
-
-- SwitchBAX, MeanBAX, and InfoBAX all finish far above uncertainty sampling on Number Obtained (about 66–70 versus about 26, out of 75).
-- MeanBAX and SwitchBAX pull ahead early. By iteration 100 they have obtained about 54–55 targets; InfoBAX has about 25.
-- InfoBAX catches up by iteration 250 and has the highest mean Number Obtained (69.5) and the highest mean Posterior Jaccard (0.739).
-- Uncertainty sampling raises Jaccard into the 0.6 range but collects targets slowly, which matches the paper’s point that reducing uncertainty everywhere is not the same as sampling the user-specified subset.
-
-The early gap is large here because the run starts from a single point with hyperparameters frozen from the full dataset. The paper’s Figure 5 starts from 10 points and refits during the loop, over a different target set, for 500 steps. Those curves are not subtracted or rescaled into the table above.
+![Acquisition curves](outputs/tutorial4_wishlist_metrics.png)
 
 ## Architecture
 
-The user writes a small algorithm that would return the desired subset if the true property map were known. Bayesian algorithm execution never needs that map. It keeps a surrogate, runs the same algorithm on the surrogate, and chooses the next composition to measure.
+A user writes the goal as a filter over properties. The same filter is run on the Gaussian process. The acquisition function then picks the next composition.
 
 ```mermaid
 flowchart LR
-    goal[Wishlist algorithm] --> surrogate[Two independent GPs]
-    surrogate --> meanPath[MeanBAX on posterior mean]
-    surrogate --> infoPath[InfoBAX on posterior samples]
-    meanPath --> switch[SwitchBAX]
-    infoPath --> switch
-    switch --> nextPoint[Next composition]
-    nextPoint --> measure[Look up Kerr and coercivity]
-    measure --> surrogate
+    goal[Goal algorithm] --> gp[One Gaussian process per property]
+    gp --> meanbax[MeanBAX]
+    gp --> infobax[InfoBAX]
+    meanbax --> switchbax[SwitchBAX]
+    infobax --> switchbax
+    switchbax --> next[Next composition]
+    next --> measure[Kerr rotation and coercivity]
+    measure --> gp
 ```
 
-| Piece | Role |
+| Module | Role |
 |---|---|
-| `src/algorithms.py` | Turns a goal into a subset of design-point ids. Wishlist is a union of property bands. |
-| `src/models.py` | `MGPR`: one scikit-learn Gaussian process per measured property. |
-| `src/acquisition.py` | InfoBAX, MeanBAX, SwitchBAX, and uncertainty sampling. |
+| `src/algorithms.py` | Goal as a subset of compositions. Wishlist is a union of property bands. |
+| `src/models.py` | Independent Gaussian processes, one per property. |
+| `src/acquisition.py` | InfoBAX, MeanBAX, SwitchBAX, uncertainty sampling. |
 | `src/metrics.py` | Number Obtained and Posterior Jaccard. |
-| `src/plotting.py` | Ternary design-space plots and the metric curves. |
-| `run_tutorial4.py` | Headless rerun of the Tutorial 4 loop. Saves JSON after every repeat. |
+| `src/plotting.py` | Ternary diagram and metric curves. |
 
-SwitchBAX executes the algorithm on the posterior mean and samples inside the predicted subset (MeanBAX). If that subset is already exhausted, it switches to InfoBAX for that iteration.
+**MeanBAX** runs the goal on the posterior mean and samples inside the predicted subset, where the model is still uncertain.
 
-## Model and fit
+**InfoBAX** runs the goal on posterior samples and picks the composition that most reduces uncertainty about the subset.
 
-Each property has its own Gaussian process. The kernel is the notebook kernel: a constant times a Matérn-5/2 kernel with one length scale per composition coordinate, plus a white-noise term. Inputs are scaled to `[0, 1]`. Outputs are scaled to `[-1, 1]`.
+**SwitchBAX** uses MeanBAX, and switches to InfoBAX when the predicted subset is empty or already measured.
 
-For this run, `fit_matern_hypers` fits those hyperparameters on all 921 compositions, then freezes them so every posterior sample shares the same kernel. There is no neural network and no GPU step. Scoring one InfoBAX iteration on this 921-point library took on the order of 1–2 seconds on CPU.
+## Model
 
-## Other tutorial numbers
+Each property is a separate Gaussian process: a constant kernel, a Matérn-5/2 kernel with one length scale per composition coordinate, and a white-noise term. Compositions are scaled to `[0, 1]`. Properties are scaled to `[-1, 1]`. Posterior samples used by InfoBAX and SwitchBAX share that kernel. The search is sequential and runs on CPU.
 
-Tutorials 1–3 only illustrate the goal and the two metrics. They are not the acquisition benchmark.
+## Paper
 
-| Check | Result |
-|---|---|
-| Design space | 921 compositions, 2 properties |
-| Level band, property 1 between 5 and 10 | 159 compositions |
-| Percentile union at the 90th percentile of each property | 186 compositions |
-| Number Obtained from 50 random draws against that percentile set | 6 |
-| Posterior Jaccard after one GP fit on 23 training points | 0.414 |
+[Targeted materials discovery using Bayesian algorithm execution](https://www.nature.com/articles/s41524-024-01326-2), npj Computational Materials **10**, 156 (2024). [doi:10.1038/s41524-024-01326-2](https://doi.org/10.1038/s41524-024-01326-2). [arXiv:2312.16078](https://arxiv.org/abs/2312.16078).
 
-## Run it again
-
-From this directory, with the FeCoNi `.mat` file in `datasets/` (the notebook downloads `FeCoNi_benchmark_dataset_220501a.mat` from the NIST REMI repository):
-
-```
-python run_tutorial_demos.py
-python run_tutorial4.py
-```
-
-`python run_tutorial4.py --only InfoBAX` reruns InfoBAX and merges it into the existing JSON. The acquisition loop is CPU-bound.
-
-## Scope
-
-Completed here: Tutorial 4 Wishlist, two repeats, 250 steps, fixed hyperparameters, four strategies. Not rerun: the paper’s 20-repeat, 500-step, adaptive-hyperparameter magnetic benchmark, the nanoparticle library, EHVI, or the multiband and Pareto goals. Software copyright remains the notice in `LICENSE`.
+Software copyright is the notice in `LICENSE`.

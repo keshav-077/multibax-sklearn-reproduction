@@ -1,5 +1,8 @@
 datasets/
 baxenv/
+*.pdf
+outputs/_paper*
+outputs/_p*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
