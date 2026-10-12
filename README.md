@@ -18,7 +18,13 @@ The paper asks a practical question: given a design space of materials and a goa
 
 ## Published result and this reproduction
 
-The paper’s Fe–Co–Ni study is Figure 5. The library has 921 ternary compositions. Two measured properties are Kerr rotation and coercivity. Figure 5b is the Wishlist goal: a union of property bands, so the desired compositions are disjoint in the triangle. The paper draws the curves. It does not print a final score table. What Figure 5b shows:
+The paper’s Fe–Co–Ni Wishlist result is Figure 5b. The same two metrics are plotted here beside this reproduction.
+
+<p align="center">
+  <img src="assets/plot_comparison.png" alt="Paper Figure 5b beside the reproduced Number Obtained and Posterior Jaccard curves" width="920">
+</p>
+
+Figure 5b, from [the paper](https://doi.org/10.1038/s41524-024-01326-2), draws the curves and does not print a final score table. What that figure shows:
 
 - InfoBAX, MeanBAX, and SwitchBAX finish together, above uncertainty sampling, random search, and EHVI, on **Number Obtained**.
 - The same three stay above uncertainty sampling on **Posterior Jaccard Index**.
